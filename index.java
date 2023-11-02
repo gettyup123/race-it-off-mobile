@@ -1,30 +1,36 @@
-// Replace the existing event listener code with the following
+const arrowLeftButton = document.getElementById('arrow-left-button');
+const arrowRightButton = document.getElementById('arrow-right-button');
+let arrowLeftPressed = false;
+let arrowRightPressed = false;
 
-const leftButton = document.getElementById('left-button');
-const rightButton = document.getElementById('right-button');
-
-leftButton.addEventListener('click', () => {
-  targetSpeed = -5;
+arrowLeftButton.addEventListener('mousedown', () => {
+  arrowLeftPressed = true;
+  handleButtonPress();
 });
 
-rightButton.addEventListener('click', () => {
-  targetSpeed = 5;
+arrowLeftButton.addEventListener('mouseup', () => {
+  arrowLeftPressed = false;
+  handleButtonPress();
 });
 
-leftButton.addEventListener('touchstart', () => {
-  targetSpeed = -5;
+arrowRightButton.addEventListener('mousedown', () => {
+  arrowRightPressed = true;
+  handleButtonPress();
 });
 
-rightButton.addEventListener('touchstart', () => {
-  targetSpeed = 5;
+arrowRightButton.addEventListener('mouseup', () => {
+  arrowRightPressed = false;
+  handleButtonPress();
 });
 
-leftButton.addEventListener('touchend', () => {
-  targetSpeed = 0;
-});
+function handleButtonPress() {
+  if (arrowLeftPressed && !arrowRightPressed) {
+    targetSpeed = -5; // Adjust the speed as needed
+  } else if (arrowRightPressed && !arrowLeftPressed) {
+    targetSpeed = 5; // Adjust the speed as needed
+  } else {
+    targetSpeed = 0;
+  }
+}
 
-rightButton.addEventListener('touchend', () => {
-  targetSpeed = 0;
-});
-
-// Remove or comment out the previous event listeners for 'ArrowLeft' and 'ArrowRight' keys.
+// Rest of your existing JavaScript code
