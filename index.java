@@ -1,36 +1,12 @@
-const arrowLeftButton = document.getElementById('arrow-left-button');
-const arrowRightButton = document.getElementById('arrow-right-button');
-let arrowLeftPressed = false;
-let arrowRightPressed = false;
-
-arrowLeftButton.addEventListener('mousedown', () => {
-  arrowLeftPressed = true;
-  handleButtonPress();
+document.addEventListener('touchmove', (event) => {
+  const touchX = event.touches[0].clientX;
+  // Bereken de nieuwe positie van de auto op basis van de positie van de aanraking
+  carPosition = touchX - container.offsetLeft - car.clientWidth / 2;
+  // Zorg ervoor dat de auto niet buiten de grenzen van het speelveld gaat
+  carPosition = Math.max(0, Math.min(container.clientWidth - car.clientWidth, carPosition));
+  // Pas de positie van de auto aan
+  car.style.left = carPosition + 'px';
 });
-
-arrowLeftButton.addEventListener('mouseup', () => {
-  arrowLeftPressed = false;
-  handleButtonPress();
-});
-
-arrowRightButton.addEventListener('mousedown', () => {
-  arrowRightPressed = true;
-  handleButtonPress();
-});
-
-arrowRightButton.addEventListener('mouseup', () => {
-  arrowRightPressed = false;
-  handleButtonPress();
-});
-
-function handleButtonPress() {
-  if (arrowLeftPressed && !arrowRightPressed) {
-    targetSpeed = -5; // Adjust the speed as needed
-  } else if (arrowRightPressed && !arrowLeftPressed) {
-    targetSpeed = 5; // Adjust the speed as needed
-  } else {
-    targetSpeed = 0;
-  }
-}
-
-// Rest of your existing JavaScript code
+// Verwijder deze lijnen
+document.addEventListener('keydown', handleKeyPress);
+document.addEventListener('keyup', handleKeyUp);
