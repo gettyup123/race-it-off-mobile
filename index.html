@@ -1,312 +1,76 @@
-hoi
-<!DOCTYPE html>
-<html>
- 
-<head>
-<title>Race it off</title>
-<style>
-    #container {
-      width: 100%;
-      height: 400px;
-      position: relative;
-      border: 1px solid #000;
-      overflow: hidden;
-      background-color: #666;
-    }
- 
-    #container::before {
-      content: "";
-      width: 10px;
-      height: 100%;
-      background-color: white;
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-    }
- 
-    #car {
-      width: 50px;
-      height: 80px;
-      position: absolute;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      background-color: purple;
-      border-radius: 10px;
-      overflow: hidden;
-    }
- 
-    #car .window {
-      width: 30px;
-      height: 55px;
-      position: absolute;
-      top: 15px;
-      left: 50%;
-      transform: translateX(-50%);
-      background-color: lightblue;
-      border-radius: 5px;
-    }
- 
-    #car .stripe {
-      width: 6px;
-      height: 20px;
-      position: absolute;
-      background-color: black;
-    }
- 
-    #car .stripe.top-left {
-      top: 10px;
-      left: 0;
-    }
- 
-    #car .stripe.top-right {
-      top: 10px;
-      right: 0;
-    }
- 
-    #car .stripe.bottom-left {
-      bottom: 10px;
-      left: 0;
-    }
- 
-    #car .stripe.bottom-right {
-      bottom: 10px;
-      right: 0;
-    }
- 
-    .obstacle.tree {
-      position: absolute;
-    }
- 
-    .obstacle.tree.standing {
-      background-color: brown;
-      width: 20px;
-      height: 100px;
-      border-radius: 5px;
-    }
- 
-    .obstacle.tree.flat {
-      width: 100px;
-      height: 20px;
-      position: absolute;
-      background-color: green;
-      border: 1px solid #006400;
-      border-radius: 5px;
-    }
- 
-    .obstacle.cone {
-      width: 20px;
-      height: 40px;
-      position: absolute;
-      background-color: orange;
-      border-bottom: 8px solid black;
-      border-radius: 5px;
-    }
- 
-    #score {
-      position: absolute;
-      bottom: 10px;
-      left: 10px;
-      font-size: 18px;
-      color: dark grey;
-    }
- 
-    #game-over-overlay {
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      top: 0;
-      left: 0;
-      background-color: rgba(0, 0, 0, 0.7);
-      display: none;
-      justify-content: center;
-      align-items: center;
-    }
- 
-    #game-over-text {
-      color: white;
-      font-size: 36px;
-    }
-</style>
-</head>
- 
-<body>
-<h1>Race it off</h1>
-<div id="container">
-<div id="car">
-<div class="window"></div>
-<div class="stripe top-left"></div>
-<div class="stripe top-right"></div>
-<div class="stripe bottom-left"></div>
-<div class="stripe bottom-right"></div>
-</div>
-</div>
-<audio id="carSound" preload="auto">
-<source src="New_Project.m4a" type="audio/mp4">
-    Your browser does not support the audio element.
-</audio>
-<div id="score">Score: 0</div>
-<div id="game-over-overlay">
-<div id="game-over-text">Game Over</div>
-</div>
-<script>
-    const car = document.getElementById('car');
-    let carPosition = 50;
-    let carSpeed = 0;
-    let targetSpeed = 0;
-    let score = 0;
-    let isPaused = false;
-    let treeSpeed = 3;
-    let isInvincible = false;
- 
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'ArrowLeft') {
-        targetSpeed = -5;
-      } else if (event.key === 'ArrowRight') {
-        targetSpeed = 5;
-      } else if (event.key === ' ') {
-        isPaused = !isPaused;
-        if (isPaused) {
-          clearInterval(obstacleInterval);
-          clearInterval(trafficConeInterval);
-          clearInterval(moveInterval);
-        } else {
-          obstacleInterval = setInterval(createObstacle, 1000);
-          trafficConeInterval = setInterval(createTrafficCone, 3000);
-          moveInterval = setInterval(moveObstacles, 30);
-        }
-      } else if (event.key === 'T') {
-        isInvincible = true;
-      } else if (event.key === 'P') {
-        isInvincible = false;
-      }
-    });
- 
-    document.addEventListener('keyup', (event) => {
-      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-        targetSpeed = 0;
-      }
-    });
- 
-    const container = document.getElementById('container');
-    const obstacles = [];
- 
-    function createObstacle() {
-      const obstacle = document.createElement('div');
-      obstacle.className = 'obstacle tree';
- 
-      if (Math.random() < 0.3) {
-        obstacle.classList.add('standing');
-        obstacle.style.width = '20px';
-        obstacle.style.height = '100px';
-      } else {
-        obstacle.classList.add('flat');
-        obstacle.style.width = '100px';
-        obstacle.style.height = '20px';
-      }
- 
-      obstacle.style.left = Math.random() * (container.clientWidth - parseInt(obstacle.style.width)) + 'px';
-      container.appendChild(obstacle);
-      obstacles.push(obstacle);
-    }
- 
-    function createTrafficCone() {
-      const cone = document.createElement('div');
-      cone.className = 'obstacle cone';
-      cone.style.width = '20px';
-      cone.style.height = '40px';
-      cone.style.left = Math.random() * (container.clientWidth - parseInt(cone.style.width)) + 'px';
-      container.appendChild(cone);
-      obstacles.push(cone);
-    }
- 
-    function moveObstacles() {
-      for (let i = 0; i < obstacles.length; i++) {
-        const obstacle = obstacles[i];
-        const obstaclePosition = parseInt(obstacle.style.top) || 0;
-        obstacle.style.top = obstaclePosition + treeSpeed + 'px';
- 
-        if (obstaclePosition > container.clientHeight) {
-          container.removeChild(obstacle);
-          obstacles.splice(i, 1);
-          score += 10;
-          document.getElementById('score').textContent = 'Score: ' + score;
- 
-          if (score % 50 === 0) {
-            carSpeed += 2;
-            treeSpeed += 1;
-          }
-        }
- 
-        if (
-          !isInvincible && // Check for invincibility
-          carPosition + 50 > parseInt(obstacle.style.left) &&
-          carPosition < parseInt(obstacle.style.left) + parseInt(obstacle.style.width) &&
-          container.clientHeight - 10 - 80 < obstaclePosition + parseInt(obstacle.style.height)
-        ) {
-          endGame();
-        }
- 
-        if (
-          obstacle.classList.contains('flat') &&
-          !isInvincible && // Check for invincibility
-          carPosition + 50 > parseInt(obstacle.style.left) &&
-          carPosition < parseInt(obstacle.style.left) + parseInt(obstacle.style.width) &&
-          container.clientHeight - 10 - 80 < obstaclePosition + 20
-        ) {
-          endGame();
-        }
-      }
-    }
- 
-    function endGame() {
-      clearInterval(obstacleInterval);
-      clearInterval(trafficConeInterval);
-      clearInterval(moveInterval);
-      document.removeEventListener('keydown', handleKeyPress);
-      const gameOverOverlay = document.getElementById('game-over-overlay');
-      const gameOverText = document.getElementById('game-over-text');
-      gameOverText.textContent = 'Game Over\nScore: ' + score;
-      gameOverOverlay.style.display = 'flex';
-    }
- 
-    let obstacleInterval = setInterval(createObstacle, 1000);
-    let trafficConeInterval = setInterval(createTrafficCone, 3000);
-    let moveInterval = setInterval(moveObstacles, 30);
- 
-    function updateCarPosition() {
-      if (!isPaused) {
-        if (carSpeed < targetSpeed) {
-          carSpeed += 0.2;
-        } else if (carSpeed > targetSpeed) {
-          carSpeed -= 0.2;
-        }
-        carPosition += carSpeed;
-        carPosition = Math.max(0, Math.min(container.clientWidth - 50, carPosition));
-        car.style.left = carPosition + 'px';
-      }
-      requestAnimationFrame(updateCarPosition);
-    }
- 
-    updateCarPosition();
-</script>
-</body>
-<audio id="background-music" autoplay loop>
-<source src="https://upload.wikimedia.org/wikipedia/commons/6/62/A_4_second_beat.ogg" type="audio/ogg">
-  Your browser does not support the audio element.
-</audio>
-<script>
-  const backgroundMusic = document.getElementById('background-music');
-  let isPlaying = true;
-  document.addEventListener('keydown', (event) => {
-    if (event.key === ' ') {
-      if (isPlaying) {
-        backgroundMusic.pause();
-      } else {
-        backgroundMusic play();
-      }
-      isPlaying = !isPlaying;
-    }
-  });
-</script>
+
+
+
+
+<!doctype html>
+<html lang="nl" id="appHtml">
+	<head>
+        <script>
+            var zermeloContext = {
+                version: '24.10j30',
+                versionName: '24.10.1'
+            };
+            if (location.search.includes("reset")) {
+            	console.log("Reset from index");
+            	if (navigator.serviceWorker) {
+	            	console.log("System supports service workers. Deregistering...");
+	            	var count = 0;
+					navigator.serviceWorker.getRegistrations().then(function(registrations) {
+						for(let registration of registrations) {
+	                        registration.unregister();
+	                        count ++;
+	    				}
+				    });
+					console.log("Deregistered " + count + " service workers.");
+            	}
+				console.log("Continuing to main app to allow it to process the reset...");
+            }
+        </script>
+        
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3.0, user-scalable=yes, shrink-to-fit=no">
+        <meta name="theme-color" content="#2C3E50">
+        <link rel="manifest" href="v/24.10j30/manifest.json">
+        <link rel="icon" type="image/svg" href="img/logo_ios.png">
+        <link rel="apple-touch-icon" href="img/logo_ios.png">
+        
+		<title>Zermelo</title>
+		
+        <link rel = "stylesheet" type="text/css" href="v/24.10j30/css/app.css" />
+        
+		<meta name="gwt:property" content="baseUrl=v/24.10j30/nl.zermelo.online.App/">
+        <script>
+            function nl_zermelo_online_App(){var O='bootstrap',P='begin',Q='gwt.codesvr.nl.zermelo.online.App=',R='gwt.codesvr=',S='nl.zermelo.online.App',T='startup',U='DUMMY',V=0,W=1,X='iframe',Y='position:absolute; width:0; height:0; border:none; left: -1000px;',Z=' top: -1000px;',$='CSS1Compat',_='<!doctype html>',ab='',bb='<html><head><\/head><body><\/body><\/html>',cb='undefined',db='readystatechange',eb=10,fb='Chrome',gb='eval("',hb='");',ib='script',jb='javascript',kb='moduleStartup',lb='moduleRequested',mb='nl_zermelo_online_App',nb='Failed to load ',ob='head',pb='meta',qb='name',rb='nl.zermelo.online.App::',sb='::',tb='gwt:property',ub='content',vb='=',wb='gwt:onPropertyErrorFn',xb='Bad handler "',yb='" for "gwt:onPropertyErrorFn"',zb='gwt:onLoadErrorFn',Ab='" for "gwt:onLoadErrorFn"',Bb='#',Cb='?',Db='/',Eb='img',Fb='clear.cache.gif',Gb='baseUrl',Hb='nl.zermelo.online.App.nocache.js',Ib='base',Jb='//',Kb='user.agent',Lb='webkit',Mb='safari',Nb='gecko',Ob=11,Pb='gecko1_8',Qb='selectingPermutation',Rb='nl.zermelo.online.App.devmode.js',Sb='A2AE1B4338BA85DC728B94E4308FB38D',Tb='F2377521D7FEA153D9F9564B5401B132',Ub=':',Vb='.cache.js',Wb='loadExternalRefs',Xb='end',Yb='http:',Zb='file:',$b='_gwt_dummy_',_b='__gwtDevModeHook:nl.zermelo.online.App',ac='Ignoring non-whitelisted Dev Mode URL: ',bc=':moduleBase';var o=window;var p=document;r(O,P);function q(){var a=o.location.search;return a.indexOf(Q)!=-1||a.indexOf(R)!=-1}
+function r(a,b){if(o.__gwtStatsEvent){o.__gwtStatsEvent({moduleName:S,sessionId:o.__gwtStatsSessionId,subSystem:T,evtGroup:a,millis:(new Date).getTime(),type:b})}}
+nl_zermelo_online_App.__sendStats=r;nl_zermelo_online_App.__moduleName=S;nl_zermelo_online_App.__errFn=null;nl_zermelo_online_App.__moduleBase=U;nl_zermelo_online_App.__softPermutationId=V;nl_zermelo_online_App.__computePropValue=null;nl_zermelo_online_App.__getPropMap=null;nl_zermelo_online_App.__installRunAsyncCode=function(){};nl_zermelo_online_App.__gwtStartLoadingFragment=function(){return null};nl_zermelo_online_App.__gwt_isKnownPropertyValue=function(){return false};nl_zermelo_online_App.__gwt_getMetaProperty=function(){return null};var s=null;var t=o.__gwt_activeModules=o.__gwt_activeModules||{};t[S]={moduleName:S};nl_zermelo_online_App.__moduleStartupDone=function(e){var f=t[S].bindings;t[S].bindings=function(){var a=f?f():{};var b=e[nl_zermelo_online_App.__softPermutationId];for(var c=V;c<b.length;c++){var d=b[c];a[d[V]]=d[W]}return a}};var u;function v(){w();return u}
+function w(){if(u){return}var a=p.createElement(X);a.id=S;a.style.cssText=Y+Z;a.tabIndex=-1;p.body.appendChild(a);u=a.contentWindow.document;u.open();var b=document.compatMode==$?_:ab;u.write(b+bb);u.close()}
+function A(k){function l(a){function b(){if(typeof p.readyState==cb){return typeof p.body!=cb&&p.body!=null}return /loaded|complete/.test(p.readyState)}
+var c=b();if(c){a();return}function d(){if(!c){if(!b()){return}c=true;a();if(p.removeEventListener){p.removeEventListener(db,d,false)}if(e){clearInterval(e)}}}
+if(p.addEventListener){p.addEventListener(db,d,false)}var e=setInterval(function(){d()},eb)}
+function m(c){function d(a,b){a.removeChild(b)}
+var e=v();var f=e.body;var g;if(navigator.userAgent.indexOf(fb)>-1&&window.JSON){var h=e.createDocumentFragment();h.appendChild(e.createTextNode(gb));for(var i=V;i<c.length;i++){var j=window.JSON.stringify(c[i]);h.appendChild(e.createTextNode(j.substring(W,j.length-W)))}h.appendChild(e.createTextNode(hb));g=e.createElement(ib);g.language=jb;g.appendChild(h);f.appendChild(g);d(f,g)}else{for(var i=V;i<c.length;i++){g=e.createElement(ib);g.language=jb;g.text=c[i];f.appendChild(g);d(f,g)}}}
+nl_zermelo_online_App.onScriptDownloaded=function(a){l(function(){m(a)})};r(kb,lb);var n=p.createElement(ib);n.src=k;if(nl_zermelo_online_App.__errFn){n.onerror=function(){nl_zermelo_online_App.__errFn(mb,new Error(nb+code))}}p.getElementsByTagName(ob)[V].appendChild(n)}
+nl_zermelo_online_App.__startLoadingFragment=function(a){return D(a)};nl_zermelo_online_App.__installRunAsyncCode=function(a){var b=v();var c=b.body;var d=b.createElement(ib);d.language=jb;d.text=a;c.appendChild(d);c.removeChild(d)};function B(){var c={};var d;var e;var f=p.getElementsByTagName(pb);for(var g=V,h=f.length;g<h;++g){var i=f[g],j=i.getAttribute(qb),k;if(j){j=j.replace(rb,ab);if(j.indexOf(sb)>=V){continue}if(j==tb){k=i.getAttribute(ub);if(k){var l,m=k.indexOf(vb);if(m>=V){j=k.substring(V,m);l=k.substring(m+W)}else{j=k;l=ab}c[j]=l}}else if(j==wb){k=i.getAttribute(ub);if(k){try{d=eval(k)}catch(a){alert(xb+k+yb)}}}else if(j==zb){k=i.getAttribute(ub);if(k){try{e=eval(k)}catch(a){alert(xb+k+Ab)}}}}}__gwt_getMetaProperty=function(a){var b=c[a];return b==null?null:b};s=d;nl_zermelo_online_App.__errFn=e}
+function C(){function e(a){var b=a.lastIndexOf(Bb);if(b==-1){b=a.length}var c=a.indexOf(Cb);if(c==-1){c=a.length}var d=a.lastIndexOf(Db,Math.min(c,b));return d>=V?a.substring(V,d+W):ab}
+function f(a){if(a.match(/^\w+:\/\//)){}else{var b=p.createElement(Eb);b.src=a+Fb;a=e(b.src)}return a}
+function g(){var a=__gwt_getMetaProperty(Gb);if(a!=null){return a}return ab}
+function h(){var a=p.getElementsByTagName(ib);for(var b=V;b<a.length;++b){if(a[b].src.indexOf(Hb)!=-1){return e(a[b].src)}}return ab}
+function i(){var a=p.getElementsByTagName(Ib);if(a.length>V){return a[a.length-W].href}return ab}
+function j(){var a=p.location;return a.href==a.protocol+Jb+a.host+a.pathname+a.search+a.hash}
+var k=g();if(k==ab){k=h()}if(k==ab){k=i()}if(k==ab&&j()){k=e(p.location.href)}k=f(k);return k}
+function D(a){if(a.match(/^\//)){return a}if(a.match(/^[a-zA-Z]+:\/\//)){return a}return nl_zermelo_online_App.__moduleBase+a}
+function F(){var f=[];var g=V;function h(a,b){var c=f;for(var d=V,e=a.length-W;d<e;++d){c=c[a[d]]||(c[a[d]]=[])}c[a[e]]=b}
+var i=[];var j=[];function k(a){var b=j[a](),c=i[a];if(b in c){return b}var d=[];for(var e in c){d[c[e]]=e}if(s){s(a,d,b)}throw null}
+j[Kb]=function(){var a=navigator.userAgent.toLowerCase();var b=p.documentMode;if(function(){return a.indexOf(Lb)!=-1}())return Mb;if(function(){return a.indexOf(Nb)!=-1||b>=Ob}())return Pb;return ab};i[Kb]={'gecko1_8':V,'safari':W};__gwt_isKnownPropertyValue=function(a,b){return b in i[a]};nl_zermelo_online_App.__getPropMap=function(){var a={};for(var b in i){if(i.hasOwnProperty(b)){a[b]=k(b)}}return a};nl_zermelo_online_App.__computePropValue=k;o.__gwt_activeModules[S].bindings=nl_zermelo_online_App.__getPropMap;r(O,Qb);if(q()){return D(Rb)}var l;try{h([Pb],Sb);h([Mb],Tb);l=f[k(Kb)];var m=l.indexOf(Ub);if(m!=-1){g=parseInt(l.substring(m+W),eb);l=l.substring(V,m)}}catch(a){}nl_zermelo_online_App.__softPermutationId=g;return D(l+Vb)}
+function G(){if(!o.__gwt_stylesLoaded){o.__gwt_stylesLoaded={}}r(Wb,P);r(Wb,Xb)}
+B();nl_zermelo_online_App.__moduleBase=C();t[S].moduleBase=nl_zermelo_online_App.__moduleBase;var H=F();if(o){var I=!!(o.location.protocol==Yb||o.location.protocol==Zb);o.__gwt_activeModules[S].canRedirect=I;function J(){var b=$b;try{o.sessionStorage.setItem(b,b);o.sessionStorage.removeItem(b);return true}catch(a){return false}}
+if(I&&J()){var K=_b;var L=o.sessionStorage[K];if(!/^http:\/\/(localhost|127\.0\.0\.1|10\.10\.\d+\.\d+)(:\d+)?\/.*$/.test(L)){if(L&&(window.console&&console.log)){console.log(ac+L)}L=ab}if(L&&!o[K]){o[K]=true;o[K+bc]=C();var M=p.createElement(ib);M.src=L;var N=p.getElementsByTagName(ob)[V];N.insertBefore(M,N.firstElementChild||N.children[V]);return false}}}G();r(O,Xb);A(H);return true}
+nl_zermelo_online_App.succeeded=nl_zermelo_online_App();
+        </script>
+	</head>
+	<body>
+		<div id="app"></div>
+        <iframe id="__gwt_historyFrame" style="width: 0; height: 0; border: 0"></iframe>
+        <noscript>Javascript moet ingeschakeld zijn om van deze app gebruik te kunnen maken.</noscript>
+	</body>
 </html>
